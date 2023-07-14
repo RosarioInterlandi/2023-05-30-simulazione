@@ -1,9 +1,13 @@
 package it.polito.tdp.gosales;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.gosales.model.ClasseComponente;
 import it.polito.tdp.gosales.model.Model;
+import it.polito.tdp.gosales.model.Retailers;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -31,16 +35,16 @@ public class FXMLController {
     private Button btnSimula;
 
     @FXML
-    private ComboBox<?> cmbAnno;
+    private ComboBox<Integer> cmbAnno;
 
     @FXML
-    private ComboBox<?> cmbNazione;
+    private ComboBox<String> cmbNazione;
 
     @FXML
     private ComboBox<?> cmbProdotto;
 
     @FXML
-    private ComboBox<?> cmbRivenditore;
+    private ComboBox<Retailers> cmbRivenditore;
 
     @FXML
     private TextArea txtArchi;
@@ -62,12 +66,44 @@ public class FXMLController {
 
     @FXML
     void doAnalizzaComponente(ActionEvent event) {
-
+    	Retailers venditore = this.cmbRivenditore.getValue();
+    	if (this.cmbRivenditore==null) {
+    		txtResult.setText("Scegli il venditore");
+    		return;
+    	}
+    	//Se sono qui ho tutte le informazioni per trovare la componente
+    	ClasseComponente componente = this.model.analizzaComponente(venditore);
+    	txtResult.appendText("\nLa componente connessa di "+venditore.getName() +" ha dimensione"+componente.getDimensione()+"\n");
+    	txtResult.appendText("Il peso totale degli archi della componente connessa è "+componente.getSommaPesi());
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-
+    	Integer anno = this.cmbAnno.getValue();
+    	String nazione = this.cmbNazione.getValue();
+    	if (anno == null || nazione ==null) {
+    		txtResult.setText("Inserire un anno e una nazione della tendina");
+    		return;
+    	}
+    		
+    	int nCommonProducts = 0;
+    	try {
+    		nCommonProducts = Integer.parseInt(this.txtNProdotti.getText());
+    	}catch(NumberFormatException e) {
+    		txtResult.setText("Inserisci un valore numerico");
+    		return;
+    	}
+    	//Se sono qui tutti i valori sono corretti
+    	this.model.BuildGraph(anno, nazione, nCommonProducts);
+    	if (this.model.getArchi().size()!=0) {
+    		txtResult.setText("Grafo creato con successo \n");
+    		txtResult.appendText(this.model.getVertici().size()+"-"+ this.model.getArchi().size()+"\n");
+    	}
+    	this.btnAnalizzaComponente.setDisable(false);
+    	this.cmbRivenditore.getItems().clear();
+    	this.cmbRivenditore.getItems().addAll(this.model.getVertici());
+    	this.cmbRivenditore.setDisable(false);
+    	
     }
 
     @FXML
@@ -95,6 +131,13 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	List<Integer> listaAnni = new ArrayList<>();
+    	for (int i = 2015; i<= 2018; i++) {
+    		listaAnni.add(i);
+    	}
+    	this.cmbAnno.getItems().addAll(listaAnni);
+    	this.cmbNazione.getItems().addAll(this.model.getCountry());
+    	this.btnAnalizzaComponente.setDisable(true);
     }
 
 }
